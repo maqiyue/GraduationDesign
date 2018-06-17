@@ -1,0 +1,410 @@
+<!--suppress ALL -->
+<html>
+<head>
+    <meta charset = "utf-8">
+    <title>大参数</title>
+    <script type="text/javascript" src="jq.js"></script>
+    <script type="text/javascript" src="jq.js"></script>
+</head>
+<body>
+<div id="outText">
+    <h1>蚁群算法求解智能交通最优路径: </h1>
+    最优路径:
+    <br/><br/>
+    最优路径权值:
+    <br/><br/>
+</div>
+<div>
+    <span>请输入起始点和终点</span>
+    <input type="text" id="beginNode">
+    <input type="text" id="endNode">
+    <button id="start">计算</button>
+</div>
+<canvas id="canvas" height="800px" width="800px">
+</canvas>
+<script type="text/javascript">
+    var beginBtn = document.getElementById('beginNode');
+    var endBtn = document.getElementById('endNode');
+    var startBtn = document.getElementById('start');
+    var canvas = document.getElementById("canvas");
+    canvas.addEventListener('click', (e) => {
+        console.log(e.layerX/1.2,e.layerY/1.2-150);
+    })
+    var canvasWidth = canvas.width;
+    var canvasHeight = canvas.height;
+    var context = canvas.getContext("2d");
+
+    var city1;
+    var city2;
+
+    var N;   //城市数量
+    var M = 400;   //蚂蚁数量
+
+    var cityInfo;
+    var inittao = 1;   //初始路径激素量
+    var tao;   //[N][N];     //N*N矩阵——表示i和j间残留的激素信息量, 初始化为常熟C（各路径相等），以表示激素的挥发
+    var yita; //[N][N];      //N*N矩阵——表示i和j间由举例所决定的选择概率矩阵
+    var delta_tao; //[N][N]; //一轮循环后增加的信息素
+    var distant; //[N][N];   //所有城市间的距离
+    var tabu; //[M][N];         //禁忌表
+    var route; //[M][N];        //M只蚂蚁所走过的路径
+    var solution; //[M];     //对M只蚂蚁所走过路径的适应度评价值
+    var BestRoute; //[N];       //最优路径
+    var LastRoute;
+    var BestSolution = 10000000000;   //设置的极限最大路径
+    var alfa, beta, rou, Q;        //路径激素更新数量
+    var NcMax;                        //蚁群最大迭代次数
+    var X,Y;
+
+    function begin() {
+        $.getJSON('./newMap.json',function(data) {
+            cityInfo = data;
+            N = cityInfo.length;
+            initAllMats();
+            initialCity();
+            // ACA_TSP();
+        });
+    }
+
+    // x数组内元素都为val [M][N]
+    function initMat(M, N, val) {
+        var x = new Array();
+        for(var i = 0; i < M; i++) {
+            x[i] = new Array();
+            for(var j = 0; j < N; j++)
+                x[i].push(val);
+        }
+        return x;
+    }
+
+    // 初始化各信息
+    function initAllMats() {
+        tao = initMat(N, N, 0); // N个城市之间初始信息素为0
+        yita = initMat(N, N, 0); // N个城市之间初始选择概率为0
+        delta_tao = initMat(N, N, 0); // N个城市之间一轮下来的增加信息素量为0
+        distant = initMat(N, N, 0); // 所有城市间的距离
+        tabu = initMat(M, N, 0); // M只蚂蚁,每只蚂蚁在当前位置可走的城市表
+        route = initMat(M, N, -1); // M只蚂蚁,每只蚂蚁走过的城市表
+
+        solution = new Array();
+        for(var i = 0; i < M; i++)
+            solution[i] = 0;
+
+        BestRoute = new Array();
+        LastRoute = new Array();
+        for(var i = 0; i < N; i++) {
+            LastRoute[i] = -1;
+            BestRoute[i] = -1;
+        }
+    }
+
+    //初始化算法参数
+    function initparameter() {
+        alfa = 0.5;   //积累的激素调节因子作用系数
+        beta = 1.5;   //启发性调节因子作用系数
+        rou = 1;  //信息素残留系数
+        rouMin = 0.6;
+        Q = 1;    //常量
+        NcMax = 200; //群蚂蚁进化代数
+    }
+
+    //取得某个路径的长度,不是两城市之间的路径
+    function EvalueSolution(a) {
+        var dist = 0;
+        var endIndex = a.indexOf(-1) != -1 ? a.indexOf(-1) : 30;
+        if(a[endIndex-1] != city2)
+            return -1;
+        for(var i = 0; i < endIndex - 1; i++) {
+            dist += distant[a[i]][a[i+1]];
+        }
+        return dist;
+    }
+
+    //绘制城市位置
+    function drawCities(x, y) {
+        for(var i = 0; i < N; i++) {
+            context.beginPath();
+
+            context.fillStyle = "blue";
+            context.strokeStyle = "blue";
+            context.lineWidth = 1;
+            context.font = "normal 16px Arial";
+
+            context.arc(x[i], y[i], 3, (Math.PI / 180) * 0, (Math.PI / 180) * 360, false);
+            context.fillText(i, x[i], y[i] + 20);
+            context.fill();
+            context.stroke();
+            context.closePath();
+            /*
+             context.fillStyle = "white";
+             context.textAlign = "center";
+             context.textBaseline = "middle";
+             context.fillText(String(i), x[i], y[i]);
+             */
+        }
+    }
+
+    //绘制路径
+    function drawPath(x1, y1, x2, y2, color, width) {
+        context.beginPath();
+        context.fillStyle = color;
+        context.strokeStyle = color;
+        context.lineWidth = width;
+        //context.fillText(parseInt(Math.sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1)), 10), (x1+x2)/2, (y1+y2)/2);
+        context.moveTo(x1, y1);
+        context.lineTo(x2, y2);
+        context.stroke();
+    }
+
+    function drawAllPath(x,y,dis) {
+        for(var i = 0; i < N; i++) {
+            for(var j = 0; j < N; j++) {
+                if(dis[i][j] != 0 && dis[i][j] != -1) {
+                    var x1 = x[i];
+                    var y1 = y[i];
+                    var x2 = x[j];
+                    var y2 = y[j];
+                    drawPath(x1, y1, x2, y2, "#e1e1e1", 2);
+                }
+            }
+        }
+    }
+
+    // 初始化城市位置并在第一次时绘制地图
+    function initialCity() {
+        //初始化城市位置
+        x = new Array();
+        y = new Array();
+        for (var i = 0;i < N;i++) {
+            x[i] = cityInfo[i].X + 20;
+            y[i] = cityInfo[i].Y + 20;
+        }
+
+        //从本地获取
+        cityInfo.map((city,index) => {
+            for (i=0;i<city.allowed.length;i++) {
+                if(Math.sqrt(Math.pow(city.X - cityInfo[city.allowed[i]].X, 2) + Math.pow(city.Y - cityInfo[city.allowed[i]].Y, 2)) < 150) {
+                    var mij, kij, pij, wij;
+                    //T信号灯周期,tg绿灯时间,t0为绿灯后第一辆车通过路口的时间,ti为每辆车转向行驶的平均时间
+                    //tao为路段打折率,a为当前路段车道数,la为堵车时平均车距,lb为平均车长
+                    //v为车流量密度,x表示负载量,l表示道路长度,tr表示红灯时间
+                    //wij表示最后求得权值,mij通行能力,kij堵塞密度,pij车辆排队长度
+                    const { T, tg, t0, ti, tao, a, la, lb, v, x, l, tr } = city.W[i];
+                    mij = 3600 / T * ((tg - t0) / ti + 1) * tao;
+                    kij = 1000 * a / la + lb;
+                    pij = v * x * tr / l;
+                    wij = mij / Math.sqrt(pij * pij + kij * kij);
+                    distant[city.nodeId][city.allowed[i]] = wij * 1000;
+                    distant[city.allowed[i]][city.nodeId] = distant[city.nodeId][city.allowed[i]];
+                }
+            }
+        })
+        drawAllPath(x,y,distant);
+        drawCities(x, y);
+    }
+
+    // 清除地图后按照初始化的城市位置重新绘制地图
+    function initCanvas() {
+        canvas.height = canvas.height;
+        drawAllPath(x,y,distant);
+        drawCities(x, y);
+    }
+
+    //主函数
+    function ACA_TSP() {
+//        console.log(BestSolution);
+        BestSolution = 10000000000;
+        tao = initMat(N, N, 0);
+        yita = initMat(N, N, 0);
+        for(var i = 0; i < N; i++) {
+            LastRoute[i] = -1;
+            BestRoute[i] = -1;
+        }
+        var NC = 0;
+        var i, j, k;
+
+        //初始化算法参数
+        initparameter();
+
+        // 城市之间启发式概率大小
+        for(i=0;i<N;i++)
+            for(j=0;j<N;j++)
+            {
+                tao[i][j] = inittao;
+                if(j != i && distant[i][j] != -1 && distant[i][j] != 0)
+                    yita[i][j] = 100/distant[i][j];    //值越大，i到j被选择的路径概率越大; 或者说，i和j距离越近，被选择的概率越大
+                else if(distant[i][j] == -1 || i == j)
+                    yita[i][j] = 0;
+            }
+
+        //初始化所有蚂蚁的禁忌表
+        for(k=0;k<M;k++)
+        {
+            route[k][0] = city1; //
+            tabu[k][route[k][0]] = city1;  //设置禁忌表的已访问过的城市为1
+        }
+        //所有蚂蚁行走NcMax趟
+        do {
+            var s = 1;
+            var partsum; //概率选择公式的分母
+            var pper;
+            var drand;
+            var pathChanged = 0; //最短路径是否更新
+            var isStop = new Array(); //已经走早目标的蚂蚁的数组
+
+            for(var i = 0; i < M; i++) {
+                isStop[i] = 0;
+            }
+
+            // TODO 初始化信息素增量
+            for(i=0;i<N;i++)
+                for(var j=0;j<N;j++)
+                    delta_tao[i][j]=0;
+
+            //s循环N次，让每只蚂蚁走N步，走完全程,改进为走到目的地结束 TODO
+            while( s < N)
+            {
+                for(k=0;k<M;k++)
+                {
+                    if(isStop[k] == 1 || isStop[k] == 2)
+                        continue;
+                    var isDefeated = 1;
+                    var jrand= (Math.random() * 32767) % 3000;
+                    drand= jrand / 3001.0;
+                    partsum = 0;
+                    pper = 0;
+                    // TODO  按禁忌表选择路径
+                    for (j = 0; j < N; j++) {
+                        if (distant[route[k][s-1]][j] > 0 && tabu[k][j] == 0) {
+                            partsum += Math.pow(tao[route[k][s - 1]][j], alfa) * Math.pow(yita[route[k][s - 1]][j], beta);
+                            isDefeated = 0;
+                        }
+                    }
+                    for (j = 0; j < N; j++) {
+                        if (distant[route[k][s-1]][j] > 0 && tabu[k][j] == 0)
+                            pper += Math.pow(tao[route[k][s - 1]][j], alfa) * Math.pow(yita[route[k][s - 1]][j], beta) / partsum;
+                        if (pper > drand)
+                            break;
+                    }
+                    if(!isDefeated) {
+                        tabu[k][j] = 1;
+                        route[k][s] = j;
+                        if (j == city2) {
+                            isStop[k] = 1;
+                        }
+                    } else {  // 证明蚂蚁走到当前位置没有下一步可以走了
+                        isStop[k] = 2;
+                    }
+                }
+                //局部更新信息素
+                for(k=0;k<M;k++){
+                    if(isStop[k] == 0) {
+                        tao[route[k][s - 1]][route[k][s]] += Q / 10 / distant[route[k][s - 1]][route[k][s]];
+                    }
+                }
+                s++;
+            }
+            //记录最短路径及其长度
+            for(k=0;k<M;k++)
+            {
+                solution[k] = EvalueSolution(route[k]);
+                if(solution[k] != -1 && solution[k] < BestSolution)
+                {
+//                        console.log('solution[k]=' + parseInt(solution[k], 10));
+//                        console.log('BestSolution=' + parseInt(BestSolution, 10));
+                    pathChanged = 1;
+                    BestSolution = solution[k];
+                    for(s=0; s<N; s++) {
+                        LastRoute[s] = BestRoute[s];
+                        BestRoute[s] = route[k][s];
+                    }
+                }
+            }
+            //根据上一批次（M个蚂蚁）所求路径的长度信息，更新从i到j的选择概率 TODO
+            for(k=0;k<M;k++)
+            {
+                var endIndex = route[k].indexOf(-1) ? route[k].indexOf(-1) : N;
+                if(route[k][endIndex-1] == city2) {
+                    for (s = 0; s < endIndex - 1; s++) {
+                        delta_tao[route[k][s]][route[k][s + 1]] += Q * 100 / solution[k]; //Q初除以这只蚂蚁走的路径的总长度
+                        // 如果路径 s->s+1 在最优路径上的话,加强信息素
+                        if(BestRoute.indexOf(route[k][s]) != -1 && BestRoute.indexOf(route[k][s+1]) == BestRoute.indexOf(route[k][s]) + 1) {
+                            delta_tao[route[k][s]][route[k][s + 1]] += 2 * Q * 100 / solution[k];
+                        }
+                        // 削弱上一次的最优路径信息素,避免新的最优路径信息素影响力过小
+                        if(LastRoute.indexOf(route[k][s]) != -1 && LastRoute.indexOf(route[k][s+1]) == LastRoute.indexOf(route[k][s]) + 1) {
+                            delta_tao[route[k][s]][route[k][s + 1]] -= Q * 100 / solution[k];
+                        }
+                    }
+                }
+            }
+
+            //动态更新信息素残留系数,避免算法停滞
+            rou = 0.95 * rou < rouMin ? rouMin : 0.95 * rou;
+
+            //计算NxN个节点间的转移概率，并设置最大与最小值
+            for(i=0;i<N;i++)
+                for(var j=0;j<N;j++)
+                {
+                    tao[i][j]=rou*tao[i][j]+delta_tao[i][j];
+                    if(tao[i][j] < 0.01) //信息素量下限
+                        tao[i][j] = 0.01;
+                    if(tao[i][j] > 20) // 信息素量上限
+                        tao[i][j] = 20;
+                }
+
+            //重新设置所有蚂蚁的禁忌表和路径信息
+            for(k=0;k<M;k++) {
+                for (var j = 0; j < N; j++) {
+                    tabu[k][j] = 0;
+                    route[k][j] = -1;
+                }
+                tabu[k][city1] = city1;
+                route[k][0] = city1;
+            }
+            NC++;
+        } while(NC < NcMax);
+        //output the calculating outs
+
+        for(i = 0; i < N; i++) {
+            j = i + 1;
+            var nodeA = BestRoute[i];
+            var nodeB = BestRoute[j];
+            var x1 = x[nodeA];
+            var y1 = y[nodeA];
+            var x2 = x[nodeB];
+            var y2 = y[nodeB];
+            drawPath(x1, y1, x2, y2, "red", 2);
+        }
+
+        var endLength = BestRoute.indexOf(-1) != -1 ? BestRoute.indexOf(-1) : N;
+        var out = document.getElementById("outText");
+        out.innerHTML = "<h1>蚁群算法求解智能交通最优路径: </h1>最优路径:<br/>";
+        for(i=0;i<endLength;i++) {
+            out.innerHTML = out.innerHTML + String(BestRoute[i]);
+            if(i !== endLength - 1)
+                out.innerHTML += '-->';
+        }
+        if(BestSolution !== 10000000000) {
+            out.innerHTML = out.innerHTML + "<br/>最优路径权值:<br/>" + BestSolution;
+        } else {
+            out.innerHTML = out.innerHTML + "<br/>最优路径权值:<br/>" + "两点不可达";
+        }
+    }
+
+    //调用上述函数
+    begin();
+    startBtn.addEventListener('click', () => {
+        city1 = parseInt(beginBtn.value, 10);
+        city2 = parseInt(endBtn.value, 10);
+        if(isNaN(city1) || isNaN(city2) || city1 < 0 || city1 > N || city2 < 0 || city2 > N) {
+            alert("请输入正确的节点!");
+            return;
+        }
+        initCanvas();
+        ACA_TSP();
+    });
+
+</script>
+</body>
+</html>

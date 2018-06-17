@@ -4,5 +4,6 @@
     <inspection_tool class="Duplicates" enabled="true" level="TYPO" enabled_by_default="true">
       <scope name="Problems" level="TYPO" enabled="true" />
     </inspection_tool>
+    <inspection_tool class="LossyEncoding" enabled="false" level="WARNING" enabled_by_default="false" />
   </profile>
 </component>
