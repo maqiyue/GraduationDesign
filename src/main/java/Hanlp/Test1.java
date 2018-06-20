@@ -22,7 +22,7 @@ public class Test1 {
 
 
         System.out.println("关键字提取：");
-        List<String> keywordList = HanLP.extractKeyword("关于举办第四届哈尔滨理工大学“互联网+”大学生创新创业大赛赛前培训的通知", 3);
+        List<String> keywordList = HanLP.extractKeyword("大学生创新创业大赛什么时候开始", 3);
         System.out.println(keywordList);
         System.out.println("\n");
 

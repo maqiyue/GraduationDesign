@@ -41,6 +41,9 @@ public class Main {
         NoticeHtmlDao noticeHtmlDao = new NoticeHtmlDao();
         for (String noticeUrl : urlList) {
             String body = htmlGet.getHtml(noticeUrl).trim();
+            if(body.equals("error")){
+                System.out.println("ErrorUrl"+noticeUrl);
+            }
             noticeHtmlDao.add1(noticeUrl, body);
             NoticeHtml html = new NoticeHtml(noticeUrl, body);
             htmlList.add(html);
@@ -268,7 +271,7 @@ public class Main {
 
             System.out.println();
             System.out.println();
-            if (count == 50){
+            if (count == 51){
                 break;
             }
         }

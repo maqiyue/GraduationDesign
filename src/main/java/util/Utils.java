@@ -24,15 +24,25 @@ public class Utils {
 //    public static final String WHITE = "\u001b[37m";
 //    public static final String OFF = "\u001b[0m";
 
-    public static final String BLICK = "\u001b[0m";
-    public static final String RED = "\u001b[0m";
-    public static final String GREEN = "\u001b[0m";
-    public static final String YELLOW = "\u001b[0m";
-    public static final String BLUE = "\u001b[0m";
-    public static final String COOLOR1 = "\u001b[0m";
-    public static final String COOLOR2 = "\u001b[0m";
-    public static final String WHITE = "\u001b[0m";
-    public static final String OFF = "\u001b[0m";
+//    public static final String BLICK = "\u001b[0m";
+//    public static final String RED = "\u001b[0m";
+//    public static final String GREEN = "\u001b[0m";
+//    public static final String YELLOW = "\u001b[0m";
+//    public static final String BLUE = "\u001b[0m";
+//    public static final String COOLOR1 = "\u001b[0m";
+//    public static final String COOLOR2 = "\u001b[0m";
+//    public static final String WHITE = "\u001b[0m";
+//    public static final String OFF = "\u001b[0m";
+
+    public static final String BLICK = "";
+    public static final String RED = "";
+    public static final String GREEN = "";
+    public static final String YELLOW = "";
+    public static final String BLUE = "";
+    public static final String COOLOR1 = "";
+    public static final String COOLOR2 = "";
+    public static final String WHITE = "";
+    public static final String OFF = "";
 
     public static Map<String, RangeFrequency> intoMap (Map<String,RangeFrequency> map, String key, int id){
         if(map.containsKey(key)){

@@ -8,10 +8,14 @@ import java.sql.DriverManager;
  */
 public class DBConnection {
 
-    String driver = "com.mysql.jdbc.Driver";
-    String url= "jdbc:mysql://localhost:3306/gd";
+//    String driver = "com.mysql.jdbc.Driver";
+//    String url= "jdbc:mysql://localhost:3306/maqiyuegd";
+//    String user = "root";
+//    String password = "Yuege2018!";
+String driver = "com.mysql.jdbc.Driver";
+    String url= "jdbc:mysql://localhost:3306/maqiyuegd";
     String user = "root";
-    String password = "Yuege2018!";
+    String password = "rootg0822";
 
     public Connection conn;
 

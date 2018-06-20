@@ -19,16 +19,16 @@ import vo.Person;
  */
 
 public class SolrJTest {
-    //Ö¸¶¨solr·şÎñÆ÷µÄµØÖ·
+    //Ö¸solrÄµÖ·
     private final static String SOLR_URL = "http://localhost:8983/solr/";
 
     /**
-     * ´´½¨SolrServer¶ÔÏó
+     * SolrServer
      *
-     * ¸Ã¶ÔÏóÓĞÁ½¸ö¿ÉÒÔÊ¹ÓÃ£¬¶¼ÊÇÏß³Ì°²È«µÄ
-     * 1¡¢CommonsHttpSolrServer£ºÆô¶¯web·şÎñÆ÷Ê¹ÓÃµÄ£¬Í¨¹ıhttpÇëÇóµÄ
-     * 2¡¢ EmbeddedSolrServer£ºÄÚÇ¶Ê½µÄ£¬µ¼ÈësolrµÄjar°ü¾Í¿ÉÒÔÊ¹ÓÃÁË
-     * 3¡¢solr 4.0Ö®ºóºÃÏñÌí¼ÓÁË²»ÉÙ¶«Î÷£¬ÆäÖĞCommonsHttpSolrServerÕâ¸öÀà¸ÄÃûÎªHttpSolrClient
+     * Ã¶Ê¹Ã£ß³Ì°È«
+     * 1CommonsHttpSolrServerwebÊ¹ÃµÄ£Í¨http
+     * 2 EmbeddedSolrServerÇ¶Ê½Ä£solrjarÍ¿Ê¹
+     * 3solr 4.0Ö®Ë²Ù¶CommonsHttpSolrServerÎªHttpSolrClient
      *
      * @return
      */
@@ -40,18 +40,18 @@ public class SolrJTest {
 
 
     /**
-     * ÍùË÷Òı¿âÌí¼ÓÎÄµµ
+     * Äµ
      * @throws IOException
      * @throws SolrServerException
      */
     public void addDoc() throws SolrServerException, IOException{
-        //¹¹ÔìÒ»ÆªÎÄµµ
+        //Ò»ÆªÄµ
         SolrInputDocument document = new SolrInputDocument();
-        //ÍùdocÖĞÌí¼Ó×Ö¶Î,ÔÚ¿Í»§¶ËÕâ±ßÌí¼ÓµÄ×Ö¶Î±ØĞëÔÚ·şÎñ¶ËÖĞÓĞ¹ı¶¨Òå
+        //docÖ¶,Ú¿Í»ÓµÖ¶Î±Ú·Ğ¹
         document.addField("id", "8");
-        document.addField("name", "ÖÜĞÂĞÇ");
-        document.addField("description", "Ò»¸ö»Ò³£Å£±ÆµÄ¾üÊÂ¼Ò");
-        //»ñµÃÒ»¸ösolr·şÎñ¶ËµÄÇëÇó£¬È¥Ìá½» ,Ñ¡Ôñ¾ßÌåµÄÄ³Ò»¸ösolr core
+        document.addField("name", "");
+        document.addField("description", "Ò»Ò³Å£ÆµÄ¾Â¼");
+        //Ò»solrËµÈ¥á½» ,Ñ¡Ä³Ò»solr core
         HttpSolrClient solr = new HttpSolrClient(SOLR_URL + "test");
         solr.add(document);
         solr.commit();
@@ -59,14 +59,14 @@ public class SolrJTest {
     }
 
     public void addDocNotice(int i,NoticeArticle noticeArticle) throws SolrServerException, IOException{
-        //¹¹ÔìÒ»ÆªÎÄµµ
+        //Ò»ÆªÄµ
         SolrInputDocument document = new SolrInputDocument();
-        //ÍùdocÖĞÌí¼Ó×Ö¶Î,ÔÚ¿Í»§¶ËÕâ±ßÌí¼ÓµÄ×Ö¶Î±ØĞëÔÚ·şÎñ¶ËÖĞÓĞ¹ı¶¨Òå
+        //docÖ¶,Ú¿Í»ÓµÖ¶Î±Ú·Ğ¹
         document.addField("id", i);
         document.addField("url", noticeArticle.getUrl());
         document.addField("title", noticeArticle.getTitle());
         document.addField("article", noticeArticle.getArticle());
-        //»ñµÃÒ»¸ösolr·şÎñ¶ËµÄÇëÇó£¬È¥Ìá½» ,Ñ¡Ôñ¾ßÌåµÄÄ³Ò»¸ösolr core
+        //Ò»solrËµÈ¥á½» ,Ñ¡Ä³Ò»solr core
         HttpSolrClient solr = new HttpSolrClient(SOLR_URL + "test");
         solr.add(document);
         solr.commit();
@@ -74,72 +74,72 @@ public class SolrJTest {
     }
 
     /**
-     * ¸ù¾İid´ÓË÷Òı¿âÉ¾³ıÎÄµµ
+     * idÉ¾Äµ
      */
     public void deleteDocumentById() throws Exception {
-        //Ñ¡Ôñ¾ßÌåµÄÄ³Ò»¸ösolr core
+        //Ñ¡Ä³Ò»solr core
         HttpSolrClient server = new HttpSolrClient(SOLR_URL+"test");
-        //É¾³ıÎÄµµ
+        //É¾Äµ
         server.deleteById("8");
-        //É¾³ıËùÓĞµÄË÷Òı
+        //É¾Ğµ
         //solr.deleteByQuery("*:*");
-        //Ìá½»ĞŞ¸Ä
+        //á½»Ş¸
         server.commit();
         server.close();
     }
 
     /**
-     * ²éÑ¯
+     * Ñ¯
      * @throws Exception
      */
     public void querySolr() throws Exception{
         HttpSolrClient solrServer = new HttpSolrClient(SOLR_URL+"test/");
         SolrQuery query = new SolrQuery();
-        //ÏÂÃæÉèÖÃsolr²éÑ¯²ÎÊı
-        //query.set("q", "*:*");// ²ÎÊıq ²éÑ¯ËùÓĞ
-        query.set("q","ÖÜĞÇ³Û");//Ïà¹Ø²éÑ¯£¬±ÈÈçÄ³ÌõÊı¾İÄ³¸ö×Ö¶Îº¬ÓĞÖÜ¡¢ĞÇ¡¢³ÛÈı¸ö×Ö ½«»á²éÑ¯³öÀ´ £¬Õâ¸ö×÷ÓÃÊÊÓÃÓÚÁªÏë²éÑ¯
+        //solrÑ¯
+        //query.set("q", "*:*");// q Ñ¯
+        query.set("q","Ç³");//Ø²Ñ¯Ä³Ä³Ö¶ÎºÜ¡Ç¡ Ñ¯ Ñ¯
 
-        //²ÎÊıfq, ¸øqueryÔö¼Ó¹ıÂË²éÑ¯Ìõ¼ş
+        //fq, queryÓ¹Ë²Ñ¯
         query.addFilterQuery("id:[0 TO 9]");//idÎª0-4
 
-        //¸øqueryÔö¼Ó²¼¶û¹ıÂËÌõ¼ş
-        //query.addFilterQuery("description:ÑİÔ±"); //description×Ö¶ÎÖĞº¬ÓĞ¡°ÑİÔ±¡±Á½×ÖµÄÊı¾İ
+        //queryÓ²
+        //query.addFilterQuery("description:Ô±"); //descriptionÖ¶ĞºĞ¡Ô±Öµ
 
-        //²ÎÊıdf,¸øqueryÉèÖÃÄ¬ÈÏËÑË÷Óò
+        //df,queryÄ¬
         query.set("df", "name");
 
-        //²ÎÊısort,ÉèÖÃ·µ»Ø½á¹ûµÄÅÅĞò¹æÔò
+        //sort,Ã·Ø½
         query.setSort("id",SolrQuery.ORDER.desc);
 
-        //ÉèÖÃ·ÖÒ³²ÎÊı
+        //Ã·Ò³
         query.setStart(0);
-        query.setRows(10);//Ã¿Ò»Ò³¶àÉÙÖµ
+        query.setRows(10);//Ã¿Ò»Ò³Öµ
 
-        //²ÎÊıhl,ÉèÖÃ¸ßÁÁ
+        //hl,Ã¸
         query.setHighlight(true);
-        //ÉèÖÃ¸ßÁÁµÄ×Ö¶Î
+        //Ã¸Ö¶
         query.addHighlightField("name");
-        //ÉèÖÃ¸ßÁÁµÄÑùÊ½
+        //Ã¸Ê½
         query.setHighlightSimplePre("<font color='red'>");
         query.setHighlightSimplePost("</font>");
 
-        //»ñÈ¡²éÑ¯½á¹û
+        //È¡Ñ¯
         QueryResponse response = solrServer.query(query);
-        //Á½ÖÖ½á¹û»ñÈ¡£ºµÃµ½ÎÄµµ¼¯ºÏ»òÕßÊµÌå¶ÔÏó
+        //Ö½È¡ÃµÄµÏ»Êµ
 
-        //²éÑ¯µÃµ½ÎÄµµµÄ¼¯ºÏ
+        //Ñ¯ÃµÄµÄ¼
         SolrDocumentList solrDocumentList = response.getResults();
-        System.out.println("Í¨¹ıÎÄµµ¼¯ºÏ»ñÈ¡²éÑ¯µÄ½á¹û");
-        System.out.println("²éÑ¯½á¹ûµÄ×ÜÊıÁ¿£º" + solrDocumentList.getNumFound());
-        //±éÀúÁĞ±í
+        System.out.println("Í¨ÄµÏ»È¡Ñ¯Ä½");
+        System.out.println("Ñ¯" + solrDocumentList.getNumFound());
+        //Ğ±
         for (SolrDocument doc : solrDocumentList) {
             System.out.println("id:"+doc.get("id")+"  name:"+doc.get("name")+"  description:"+doc.get("description"));
         }
 
-        //µÃµ½ÊµÌå¶ÔÏó
+        //ÃµÊµ
         List<Person> tmpLists = response.getBeans(Person.class);
         if(tmpLists!=null && tmpLists.size()>0){
-            System.out.println("Í¨¹ıÎÄµµ¼¯ºÏ»ñÈ¡²éÑ¯µÄ½á¹û");
+            System.out.println("Í¨ÄµÏ»È¡Ñ¯Ä½");
             for(Person per:tmpLists){
                 System.out.println("id:"+per.getId()+"  name:"+per.getName()+"  description:"+per.getDescription());
             }
@@ -149,41 +149,41 @@ public class SolrJTest {
     public void querySolr(String q,String type) throws Exception{
         HttpSolrClient solrServer = new HttpSolrClient(SOLR_URL+"test/");
         SolrQuery query = new SolrQuery();
-        //ÏÂÃæÉèÖÃsolr²éÑ¯²ÎÊı
+        //solrÑ¯
         query.set("q",q);
         query.set("df", type);
-        //²ÎÊısort,ÉèÖÃ·µ»Ø½á¹ûµÄÅÅĞò¹æÔò
+        //sort,Ã·Ø½
         query.setSort("id",SolrQuery.ORDER.desc);
 
-        //ÉèÖÃ·ÖÒ³²ÎÊı
+        //Ã·Ò³
         query.setStart(0);
-        query.setRows(10);//Ã¿Ò»Ò³¶àÉÙÖµ
+        query.setRows(10);//Ã¿Ò»Ò³Öµ
 
-        //²ÎÊıhl,ÉèÖÃ¸ßÁÁ
+        //hl,Ã¸
         query.setHighlight(true);
-        //ÉèÖÃ¸ßÁÁµÄ×Ö¶Î
+        //Ã¸Ö¶
         query.addHighlightField("name");
-        //ÉèÖÃ¸ßÁÁµÄÑùÊ½
+        //Ã¸Ê½
         query.setHighlightSimplePre("<font color='red'>");
         query.setHighlightSimplePost("</font>");
 
-        //»ñÈ¡²éÑ¯½á¹û
+        //È¡Ñ¯
         QueryResponse response = solrServer.query(query);
-        //Á½ÖÖ½á¹û»ñÈ¡£ºµÃµ½ÎÄµµ¼¯ºÏ»òÕßÊµÌå¶ÔÏó
+        //Ö½È¡ÃµÄµÏ»Êµ
 
-        //²éÑ¯µÃµ½ÎÄµµµÄ¼¯ºÏ
+        //Ñ¯ÃµÄµÄ¼
         SolrDocumentList solrDocumentList = response.getResults();
-        System.out.println("Í¨¹ıÎÄµµ¼¯ºÏ»ñÈ¡²éÑ¯µÄ½á¹û");
-        System.out.println("²éÑ¯½á¹ûµÄ×ÜÊıÁ¿£º" + solrDocumentList.getNumFound());
-        //±éÀúÁĞ±í
+        System.out.println("Í¨ÄµÏ»È¡Ñ¯Ä½");
+        System.out.println("Ñ¯" + solrDocumentList.getNumFound());
+        //Ğ±
         for (SolrDocument doc : solrDocumentList) {
             System.out.println(new Gson().toJson(doc));
         }
 
-//        //µÃµ½ÊµÌå¶ÔÏó
+//        //ÃµÊµ
 //        List<Person> tmpLists = response.getBeans(Person.class);
 //        if(tmpLists!=null && tmpLists.size()>0){
-//            System.out.println("Í¨¹ıÎÄµµ¼¯ºÏ»ñÈ¡²éÑ¯µÄ½á¹û");
+//            System.out.println("Í¨ÄµÏ»È¡Ñ¯Ä½");
 //            for(Person per:tmpLists){
 //                System.out.println("id:"+per.getId()+"  name:"+per.getName()+"  description:"+per.getDescription());
 //            }
